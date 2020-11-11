@@ -1,0 +1,111 @@
+---
+title: "615 report"
+author: "Ruiyi Lian"
+date: "November 11, 2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(usmap)
+```
+
+### Input&Intro Data
+
+<h4>The data is about the disaster distribution in the United State.
+
+```{r}
+r <- read_csv("C:/Users/LXD/Documents/R/615 mapping/report/r(1).csv")
+head(r)
+```
+
+<h4> For more information of the data:
+### Data Cleaning
+
+First of all, we need to select the variable we need. They are disasterNumber which helps us identify which
+disaster we are looking, county and state which help us locate where these disaster happened, incident type which helps us know what kinds of disaster it was, and state number code and county code which help us draw the map.
+
+```{r}
+data<-r%>%group_by(disasterNumber,county,state)%>%summarise(projectAmount=sum(projectAmount),countyCode=max(countyCode),stateNumberCode=max(stateNumberCode),incidentType=max(incidentType),.groups = 'drop')
+data1<-data%>%group_by(county)%>%summarise(projectAmount=sum(projectAmount),countyCode=max(countyCode),stateNumberCode=max(stateNumberCode),incidentType=max(incidentType),state=max(state),.groups = 'drop')
+head(data1)
+```
+
+
+### MAPPing
+
+Here is examples for our data visualization on US Map.
+
+#### Based on DisasterNumber
+
+Let's take #1264 disaster for example.
+
+```{r}
+data2<-data[data$disasterNumber == 1264,]
+
+#based on us map
+plot_usmap(data = data2, values = "projectAmount", color = "red") + 
+      scale_fill_continuous(
+        low = "blue", high = "red", name = "Disaster", label = scales::comma
+      ) + labs(title = "US Disaster") + theme(legend.position = "right")
+
+#based on State map
+a<-data2$state
+data2<-data2%>%filter(county != "Statewide")
+    data2<-data2 %>% rowwise %>% mutate(fips = 1000*stateNumberCode+countyCode)
+plot_usmap(regions = "county", data = data2, values = "projectAmount",include = a ,color = "red") + 
+      scale_fill_continuous(
+        low = "blue", high = "red", name = "Disaster", label = scales::comma
+      ) + labs(title = "US Disaster") + theme(legend.position = "right")
+```
+
+#### Based on State
+
+Let's take PA as an example
+
+```{r}
+data3<-data1[data1$state == "Pennsylvania",]
+
+#Based on the US MaP
+data3_1<-data3%>%group_by(state)%>%summarise(projectAmount=sum(projectAmount),countyCode=max(countyCode),stateNumberCode=max(stateNumberCode),incidentType=max(incidentType),.groups = 'drop')
+    
+plot_usmap(data = data3_1, values = "projectAmount", color = "red") + 
+      scale_fill_continuous(
+        low = "blue", high = "red", name = "Disaster", label = scales::comma
+      ) + labs(title = "US Disaster") + theme(legend.position = "right")
+#Based on the state Map
+a<-data3$state
+data3_2<-data3%>%filter(county != "Statewide")
+    data3_2<-data3_2 %>% rowwise %>% mutate(fips = 1000*stateNumberCode+countyCode)
+plot_usmap(regions = "county", data = data3_2, values = "projectAmount",include = a ,color = "red") + 
+      scale_fill_continuous(
+        low = "blue", high = "red", name = "Disaster", label = scales::comma
+      ) + labs(title = "US Disaster") + theme(legend.position = "right")
+```
+
+#### Based on Incident Type
+
+Let's take Biological as an example
+
+```{r}
+data4<-data1[data1$incidentType == "Biological",]
+
+#Based on the US MaP
+data4_1<-data4%>%group_by(state)%>%summarise(projectAmount=sum(projectAmount),countyCode=max(countyCode),stateNumberCode=max(stateNumberCode),incidentType=max(incidentType),.groups = 'drop')
+plot_usmap(data = data4_1, values = "projectAmount", color = "red") + 
+      scale_fill_continuous(
+        low = "blue", high = "red", name = "Disaster", label = scales::comma
+      ) + labs(title = "US Disaster") + theme(legend.position = "right")
+#Based on the state Map
+a<-data4$state
+data4_2<-data4%>%filter(county != "Statewide")
+    data4_2<-data4_2 %>% rowwise %>% mutate(fips = 1000*stateNumberCode+countyCode)
+plot_usmap(regions = "county", data = data4_2, values = "projectAmount",include = a ,color = "red") + 
+      scale_fill_continuous(
+        low = "blue", high = "red", name = "Disaster", label = scales::comma
+      ) + labs(title = "US Disaster") + theme(legend.position = "right")
+```
